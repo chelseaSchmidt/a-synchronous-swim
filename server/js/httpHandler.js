@@ -5,6 +5,7 @@ const multipart = require('./multipartUtils');
 const handler = require('./keypressHandler.js');
 const q = require('./messageQueue.js');
 const formidable = require('formidable');
+const querystring = require('querystring');
 
 // Path for the background image ///////////////////////
 module.exports.backgroundImageFile = path.join(__dirname, 'background.jpg');
@@ -51,7 +52,21 @@ module.exports.router = (req, res, next = ()=>{}) => {
   }
   //POST BACKGROUND============================================================
   if (req.method === 'POST'){
-    console.log(req._postData);
+    console.log(req._postData); //--> this is buffer data from spec
+    let imageString = '';
+    req.on('data', chunk => {
+      imageString += chunk.toString('base64');
+    });
+    req.on('end', () => {
+      console.log(imageString);
+      fs.writeFile('test.jpg', imageString, 'base64', (err) => {
+        if (err) {
+          console.log('write error');
+        } else {
+          console.log('written');
+        }
+      });
+    });
     const form = formidable();
     form.parse(req, (err, fields, files) => {
       if(err) {
