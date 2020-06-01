@@ -15,7 +15,7 @@
     });
   }
 
-  setInterval(fetchSwimCommand, 1000);
+  setInterval(fetchSwimCommand, 500);
 
   /////////////////////////////////////////////////////////////////////
   // The ajax file uplaoder is provided for your convenience!
