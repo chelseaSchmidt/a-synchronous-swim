@@ -49,6 +49,7 @@ module.exports.router = (req, res, next = ()=>{}) => {
     //POST BACKGROUND==========================================================
     if (req.method === 'POST'){
       if (req.headers === undefined) { //non-multipart
+        console.log(req);
         let imageString = '';
         req.on('data', chunk => {
           imageString += chunk.toString('base64');
@@ -71,33 +72,59 @@ module.exports.router = (req, res, next = ()=>{}) => {
           });
         });
       } else if (req.headers['content-type'].indexOf('multipart/form-data') > -1) {
-        const form = formidable();
-        form.parse(req, (err, fields, files) => {
-          if(err) {
-            res.writeHead(400, headers);
-            console.log('multipart file parse error');
-            res.end('multipart file parse error');
-            next(res);
-            return;
-          }
-          let file = files['file'];
-          let oldPath = file.path;
-          let newPath = path.join(__dirname, 'background.jpg');
-          fs.rename(oldPath, newPath, (err)=> {
-            if(err){
+
+        let buffer = Buffer.alloc(0);
+        req.on('data', chunk => {
+          buffer = Buffer.concat([buffer, chunk]);
+        });
+        req.on('end', () => {
+          let file = multipart.getFile(buffer);
+          let fileData = file.data.toString('base64');
+          fs.writeFile(module.exports.backgroundImageFile, fileData, 'base64', (err) => {
+            if (err) {
+              console.log('writeFile error on multipart image');
               res.writeHead(400, headers);
-              console.log('multipart file rename error');
-              res.end('multipart file rename error');
+              res.end('writeFile error on multipart image');
+              next(res);
+              return;
+            } else {
+              console.log('multipart file written successfully');
+              res.writeHead(201, headers);
+              res.end('multipart file written successfully');
               next(res);
               return;
             }
           });
         });
-        res.writeHead(201, headers);
-        console.log('multipart data parsed successfully');
-        res.end('multipart data parsed successfully');
-        next(res);
-        return;
+
+
+        // const form = formidable();
+        // form.parse(req, (err, fields, files) => {
+        //   if(err) {
+        //     res.writeHead(400, headers);
+        //     console.log('multipart file parse error');
+        //     res.end('multipart file parse error');
+        //     next(res);
+        //     return;
+        //   }
+        //   let file = files['file'];
+        //   let oldPath = file.path;
+        //   let newPath = path.join(__dirname, 'background.jpg');
+        //   fs.rename(oldPath, newPath, (err)=> {
+        //     if(err){
+        //       res.writeHead(400, headers);
+        //       console.log('multipart file rename error');
+        //       res.end('multipart file rename error');
+        //       next(res);
+        //       return;
+        //     }
+        //   });
+        // });
+        // res.writeHead(201, headers);
+        // console.log('multipart data parsed successfully');
+        // res.end('multipart data parsed successfully');
+        // next(res);
+        // return;
       }
     }
   //OPTIONS REQUEST============================================================

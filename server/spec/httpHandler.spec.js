@@ -98,10 +98,10 @@ describe('server responses', () => {
     });
   });
 
-  postTestFile = path.join(__dirname, 'water-lg.multipart');
+  var multipartTestFile = path.join(__dirname, 'water-lg.multipart');
 
   it('should respond to a POST request to save a multipart background image', (done) => {
-    fs.readFile(postTestFile, (err, fileData) => {
+    fs.readFile(multipartTestFile, (err, fileData) => {
       httpHandlerTemp = httpHandler.backgroundImageFile;
       httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
       let {req, res} = server.mock('/background', 'POST', fileData);
@@ -116,7 +116,7 @@ describe('server responses', () => {
   });
 
   it('should send back the previously saved multipart image', (done) => {
-    fs.readFile(postTestFile, (err, fileData) => {
+    fs.readFile(multipartTestFile, (err, fileData) => {
       httpHandlerTemp = httpHandler.backgroundImageFile;
       httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
       let post = server.mock('/background', 'POST', fileData);

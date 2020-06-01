@@ -10,7 +10,6 @@ var request = function(url, method, postdata) {
   this.method = method;
   this._postData = postdata;
   this.setEncoding = function() { /* noop */ };
-  console.log('mock server: ', postdata, method);
 
   this.addListener = this.on = (type, callback) => {
     if (type === 'data') {

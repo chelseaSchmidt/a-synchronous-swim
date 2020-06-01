@@ -28,7 +28,7 @@
     $.ajax({
       type: 'POST',
       data: formData,
-      url: serverUrl,
+      url: `${serverUrl}/background`,
       cache: false,
       contentType: false,
       processData: false,
