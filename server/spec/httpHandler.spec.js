@@ -59,6 +59,7 @@ describe('server responses', () => {
 
     httpHandler.router(req, res, (res) => {
       expect(res._responseCode).to.equal(200);
+      expect(res._ended).to.equal(true);
       done();
     });
   });
@@ -82,13 +83,15 @@ describe('server responses', () => {
 
   it('should send back the previously saved image', (done) => {
     fs.readFile(postTestFile, (err, fileData) => {
-      httpHandler.backgroundImageFile = path.join('.', 'spec', 'temp.jpg');
-      let post = server.mock('FILL_ME_IN', 'POST', fileData);
+      httpHandlerTemp = httpHandler.backgroundImageFile;
+      httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
+      let post = server.mock('/background', 'POST', fileData);
 
       httpHandler.router(post.req, post.res, () => {
-        let get = server.mock('FILL_ME_IN', 'GET');
-        httpHandler.router(get.req, get.res, () => {
-          expect(Buffer.compare(fileData, get.res._data)).to.equal(0);
+        let get = server.mock('/background', 'GET');
+        httpHandler.router(get.req, get.res, (res) => {
+          expect(Buffer.compare(fileData, res._data)).to.equal(0);
+          httpHandler.backgroundImageFile = httpHandlerTemp;
           done();
         });
       });

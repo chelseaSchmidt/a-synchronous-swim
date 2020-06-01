@@ -46,64 +46,66 @@ module.exports.router = (req, res, next = ()=>{}) => {
       });
       let readStream = fs.createReadStream(module.exports.backgroundImageFile);
       readStream.pipe(res);
-      next(res);
-      return;
-    }
-  }
-  //POST BACKGROUND============================================================
-  if (req.method === 'POST'){
-    if (req.headers === undefined) {
-      let imageString = '';
-      req.on('data', chunk => {
-        imageString += chunk.toString('base64');
+      readStream.on('end', () => {
+        console.log('file data added to response');
+        next(res);
+        res.end('file data added to response');
       });
-      req.on('end', () => {
-        fs.writeFile(module.exports.backgroundImageFile, imageString, 'base64', (err) => {
-          if (err) {
-            console.log('writeFile error');
+    }
+    //POST BACKGROUND==========================================================
+    if (req.method === 'POST'){
+      if (req.headers === undefined) {
+        let imageString = '';
+        req.on('data', chunk => {
+          imageString += chunk.toString('base64');
+        });
+        req.on('end', () => {
+          fs.writeFile(module.exports.backgroundImageFile, imageString, 'base64', (err) => {
+            if (err) {
+              console.log('writeFile error');
+              res.writeHead(400, headers);
+              res.end('writeFile error');
+              next(res);
+              return;
+            } else {
+              console.log('file written successfully');
+              res.writeHead(201, headers);
+              res.end('file written successfully');
+              next(res);
+              return;
+            }
+          });
+        });
+      } else if (req.headers['content-type'].indexOf('multipart/form-data') > -1) {
+        const form = formidable();
+        form.parse(req, (err, fields, files) => {
+          if(err) {
             res.writeHead(400, headers);
-            res.end('writeFile error');
-            next(res);
-            return;
-          } else {
-            console.log('file written successfully');
-            res.writeHead(201, headers);
-            res.end('file written successfully');
+            console.log('parse error');
+            res.end('parse error');
             next(res);
             return;
           }
+          let file = files['file'];
+          let oldPath = file.path;
+          let newPath = path.join(__dirname, 'background.jpg');
+          fs.rename(oldPath, newPath, (err)=> {
+            if(err){
+              res.writeHead(400, headers);
+              res.end('rename error');
+              next(res);
+              return;
+            }
+          });
         });
-      });
-    } else if (req.headers['content-type'].indexOf('multipart/form-data') > -1) {
-      const form = formidable();
-      form.parse(req, (err, fields, files) => {
-        if(err) {
-          res.writeHead(400, headers);
-          console.log('parse error');
-          res.end('parse error');
-          next(res);
-          return;
-        }
-        let file = files['file'];
-        let oldPath = file.path;
-        let newPath = path.join(__dirname, 'background.jpg');
-        fs.rename(oldPath, newPath, (err)=> {
-          if(err){
-            res.writeHead(400, headers);
-            res.end('rename error');
-            next(res);
-            return;
-          }
-        });
-      });
-      res.writeHead(201, headers);
-      res.end('form parsed successfully');
-      next(res);
-      return;
+        res.writeHead(201, headers);
+        res.end('form parsed successfully');
+        next(res);
+        return;
+      }
     }
-  }
   //OPTIONS REQUEST============================================================
-  if (req.method === 'OPTIONS') {
+  } else if (req.method === 'OPTIONS') {
     res.writeHead(200, headers);
     res.end('');
 
