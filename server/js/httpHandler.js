@@ -32,7 +32,7 @@ module.exports.router = (req, res, next = ()=>{}) => {
           "access-control-allow-headers": "*",
           "access-control-max-age": 10
         });
-        res.end();
+        res.end('image not found');
         next(res);
         return;
       }
@@ -52,42 +52,55 @@ module.exports.router = (req, res, next = ()=>{}) => {
   }
   //POST BACKGROUND============================================================
   if (req.method === 'POST'){
-    console.log(req._postData); //--> this is buffer data from spec
-    let imageString = '';
-    req.on('data', chunk => {
-      imageString += chunk.toString('base64');
-    });
-    req.on('end', () => {
-      console.log(imageString);
-      fs.writeFile('test.jpg', imageString, 'base64', (err) => {
-        if (err) {
-          console.log('write error');
-        } else {
-          console.log('written');
-        }
+    if (req.headers === undefined) {
+      let imageString = '';
+      req.on('data', chunk => {
+        imageString += chunk.toString('base64');
       });
-    });
-    const form = formidable();
-    form.parse(req, (err, fields, files) => {
-      if(err) {
-        res.writeHead(400, headers);
-        res.end();
-        return;
-      }
-      let file = files['file'];
-      let oldPath = file.path;
-      let newPath = path.join(__dirname, 'background.jpg');
-      fs.rename(oldPath, newPath, (err)=> {
-        if(err){
+      req.on('end', () => {
+        fs.writeFile(module.exports.backgroundImageFile, imageString, 'base64', (err) => {
+          if (err) {
+            console.log('writeFile error');
+            res.writeHead(400, headers);
+            res.end('writeFile error');
+            next(res);
+            return;
+          } else {
+            console.log('file written successfully');
+            res.writeHead(201, headers);
+            res.end('file written successfully');
+            next(res);
+            return;
+          }
+        });
+      });
+    } else if (req.headers['content-type'].indexOf('multipart/form-data') > -1) {
+      const form = formidable();
+      form.parse(req, (err, fields, files) => {
+        if(err) {
           res.writeHead(400, headers);
-          res.end();
+          console.log('parse error');
+          res.end('parse error');
+          next(res);
           return;
         }
+        let file = files['file'];
+        let oldPath = file.path;
+        let newPath = path.join(__dirname, 'background.jpg');
+        fs.rename(oldPath, newPath, (err)=> {
+          if(err){
+            res.writeHead(400, headers);
+            res.end('rename error');
+            next(res);
+            return;
+          }
+        });
       });
-    });
-    res.writeHead(201, headers);
-    res.end();
-    return;
+      res.writeHead(201, headers);
+      res.end('form parsed successfully');
+      next(res);
+      return;
+    }
   }
   //OPTIONS REQUEST============================================================
   if (req.method === 'OPTIONS') {

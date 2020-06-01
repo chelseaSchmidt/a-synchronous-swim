@@ -63,7 +63,7 @@ describe('server responses', () => {
     });
   });
 
-  var postTestFile = path.join(__dirname, 'water-sm.jpg');
+  var postTestFile = path.join(__dirname, 'water-lg.jpg');
 
   it('should respond to a POST request to save a background image', (done) => {
     fs.readFile(postTestFile, (err, fileData) => {
@@ -71,9 +71,9 @@ describe('server responses', () => {
       httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
       let {req, res} = server.mock('/background', 'POST', fileData);
 
-      httpHandler.router(req, res, () => {
-        expect(res._responseCode).to.equal(201);
-        expect(res._ended).to.equal(true);
+      httpHandler.router(req, res, (resp) => {
+        expect(resp._responseCode).to.equal(201);
+        expect(resp._ended).to.equal(true);
         httpHandler.backgroundImageFile = httpHandlerTemp;
         done();
       });

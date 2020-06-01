@@ -32,10 +32,12 @@
       cache: false,
       contentType: false,
       processData: false,
-      success: () => {
+      success: (data) => {
         // reload the page
         window.location = window.location.href;
-        console.log('success CB triggered');
+      },
+      error: (err) => {
+        console.log(err.responseText);
       }
     });
   };
