@@ -97,4 +97,39 @@ describe('server responses', () => {
       });
     });
   });
+
+  postTestFile = path.join(__dirname, 'water-lg.multipart');
+
+  it('should respond to a POST request to save a multipart background image', (done) => {
+    fs.readFile(postTestFile, (err, fileData) => {
+      httpHandlerTemp = httpHandler.backgroundImageFile;
+      httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
+      let {req, res} = server.mock('/background', 'POST', fileData);
+
+      httpHandler.router(req, res, (resp) => {
+        expect(resp._responseCode).to.equal(201);
+        expect(resp._ended).to.equal(true);
+        httpHandler.backgroundImageFile = httpHandlerTemp;
+        done();
+      });
+    });
+  });
+
+  it('should send back the previously saved multipart image', (done) => {
+    fs.readFile(postTestFile, (err, fileData) => {
+      httpHandlerTemp = httpHandler.backgroundImageFile;
+      httpHandler.backgroundImageFile = path.join(__dirname, 'temp.jpg');
+      let post = server.mock('/background', 'POST', fileData);
+
+      httpHandler.router(post.req, post.res, () => {
+        let get = server.mock('/background', 'GET');
+        httpHandler.router(get.req, get.res, (res) => {
+          expect(Buffer.compare(fileData, res._data)).to.equal(0);
+          httpHandler.backgroundImageFile = httpHandlerTemp;
+          done();
+        });
+      });
+    });
+  });
+
 });

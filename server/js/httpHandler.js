@@ -25,13 +25,7 @@ module.exports.router = (req, res, next = ()=>{}) => {
     if (req.method === 'GET') {
 
       if ( !( fs.existsSync(module.exports.backgroundImageFile) ) ) {
-        res.writeHead(404, {
-          'Content-Type': 'image/jpeg',
-          "access-control-allow-origin": "*",
-          "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "access-control-allow-headers": "*",
-          "access-control-max-age": 10
-        });
+        res.writeHead(404, headers);
         res.end('image not found');
         next(res);
         return;
@@ -47,14 +41,14 @@ module.exports.router = (req, res, next = ()=>{}) => {
       let readStream = fs.createReadStream(module.exports.backgroundImageFile);
       readStream.pipe(res);
       readStream.on('end', () => {
-        console.log('file data added to response');
+        console.log('Image piped');
         next(res);
-        res.end('file data added to response');
+        res.end('Image piped');
       });
     }
     //POST BACKGROUND==========================================================
     if (req.method === 'POST'){
-      if (req.headers === undefined) {
+      if (req.headers === undefined) { //non-multipart
         let imageString = '';
         req.on('data', chunk => {
           imageString += chunk.toString('base64');
@@ -62,15 +56,15 @@ module.exports.router = (req, res, next = ()=>{}) => {
         req.on('end', () => {
           fs.writeFile(module.exports.backgroundImageFile, imageString, 'base64', (err) => {
             if (err) {
-              console.log('writeFile error');
+              console.log('writeFile error on non-multipart image');
               res.writeHead(400, headers);
-              res.end('writeFile error');
+              res.end('writeFile error on non-multipart image');
               next(res);
               return;
             } else {
-              console.log('file written successfully');
+              console.log('non-multipart file written successfully');
               res.writeHead(201, headers);
-              res.end('file written successfully');
+              res.end('non-multipart file written successfully');
               next(res);
               return;
             }
@@ -81,8 +75,8 @@ module.exports.router = (req, res, next = ()=>{}) => {
         form.parse(req, (err, fields, files) => {
           if(err) {
             res.writeHead(400, headers);
-            console.log('parse error');
-            res.end('parse error');
+            console.log('multipart file parse error');
+            res.end('multipart file parse error');
             next(res);
             return;
           }
@@ -92,14 +86,16 @@ module.exports.router = (req, res, next = ()=>{}) => {
           fs.rename(oldPath, newPath, (err)=> {
             if(err){
               res.writeHead(400, headers);
-              res.end('rename error');
+              console.log('multipart file rename error');
+              res.end('multipart file rename error');
               next(res);
               return;
             }
           });
         });
         res.writeHead(201, headers);
-        res.end('form parsed successfully');
+        console.log('multipart data parsed successfully');
+        res.end('multipart data parsed successfully');
         next(res);
         return;
       }
